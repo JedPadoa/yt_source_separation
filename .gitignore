@@ -30,3 +30,6 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# test files
+test_audio/
