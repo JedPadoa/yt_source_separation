@@ -1,0 +1,689 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Monospace fonts typical of terminals and editors like vim */
+  font-family: 'Courier New', Courier, monospace;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: #000000;
+  overflow: hidden;
+  color: #00ff00; /* Classic terminal green */
+}
+
+body {
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-y: auto; /* Allow body to scroll */
+}
+
+.container {
+  width: 90%;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #000000;
+  border: 2px solid #00ff00; /* Boxy green border */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 400px; /* Minimum height */
+  max-height: 85vh; /* Limit maximum height */
+  height: auto; /* Changed from 100vh to auto */
+  overflow-y: auto; /* Allow container to scroll */
+  padding-bottom: 20px; /* Reduced padding */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Retro terminal effect */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Adjust terminal header spacing */
+.terminal-header {
+  margin-bottom: 10px;
+}
+
+.ascii-title {
+  font-size: 0.9em; /* Slightly reduce ASCII art size */
+  line-height: 1;
+  margin: 0;
+}
+
+/* Terminal text styles */
+.terminal-text {
+  width: 100%;
+  max-width: 600px;
+  margin: 10px 0; /* Reduced from 20px */
+  text-align: left;
+}
+
+.terminal-text p {
+  font-size: 16px;
+  margin-bottom: 8px;
+  position: relative;
+  padding-left: 15px;
+}
+
+.terminal-text p::before {
+  content: ">";
+  position: absolute;
+  left: 0;
+}
+
+/* Input styles */
+.input-wrapper {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 600px;
+  height: 50px;
+  margin-bottom: 20px;
+}
+
+#youtube-url {
+  width: 100%;
+  height: 50px;
+  padding: 0 15px;
+  border: 2px solid #00ff00;
+  border-radius: 0; /* Boxy edges */
+  background-color: #000000;
+  text-align: left; /* Left aligned text */
+  font-size: 16px;
+  color: #00ff00;
+  outline: none;
+  caret-color: #00ff00; /* Blinking cursor color */
+}
+
+#youtube-url::placeholder {
+  color: #00aa00;
+  text-align: left;
+}
+
+/* Buttons */
+button {
+  background-color: #00ff00;
+  color: #000000;
+  border: none;
+  padding: 8px 16px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0;
+  text-transform: uppercase;
+  transition: background-color 0.2s;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+button:hover {
+  background-color: #66ff66;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+}
+
+button:active {
+  background-color: #00cc00;
+}
+
+button:disabled {
+  background-color: #2a2a2a;
+  color: #5a5a5a;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondary-button {
+  background-color: #2a2a2a;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+.secondary-button:hover {
+  background-color: #3a3a3a;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.secondary-button:active {
+  background-color: #444444;
+}
+
+.secondary-button:disabled {
+  border-color: #5a5a5a;
+  color: #5a5a5a;
+  box-shadow: none;
+}
+
+/* Retro ASCII-art style loading indicator */
+@keyframes loading {
+  0% { content: "[    ]"; }
+  25% { content: "[=   ]"; }
+  50% { content: "[==  ]"; }
+  75% { content: "[=== ]"; }
+  100% { content: "[====]"; }
+}
+
+/* Status styles */
+.status {
+  margin: 15px 0 0 0; /* Reduced top margin */
+  padding: 15px;
+  border: 2px solid #00ff00;
+  width: 100%;
+  max-width: 600px;
+  text-align: left;
+  font-size: 16px;
+  background-color: #000000;
+}
+
+.status::before {
+  display: block;
+  content: "> ";
+}
+
+.success {
+  color: #00ff00;
+}
+
+.error {
+  color: #ff0000;
+}
+
+.info {
+  color: #00ffff;
+}
+
+/* Cancellation style with red outline */
+.cancellation {
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  font-weight: bold;
+  text-align: center;
+  font-size: 18px;
+}
+
+.cancellation::before {
+  display: none; /* Remove the ">" prefix for a cleaner cancellation message */
+}
+
+/* Remove the old loading animation that used content */
+.info::after {
+  content: none;
+}
+
+/* New loading animation styles */
+.separation-in-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #00aaff;
+  background-color: rgba(0, 0, 20, 0.3);
+}
+
+.separation-in-progress::before {
+  display: block;
+  content: "> ";
+  align-self: flex-start;
+  margin-bottom: 10px;
+}
+
+.loading-text {
+  margin-bottom: 15px;
+  font-weight: bold;
+  color: #00ffff;
+  font-size: 18px;
+  text-align: center;
+}
+
+/* Alternative ASCII-style loading animation - more visible */
+@keyframes ascii-loading {
+  0% { content: "[    ]"; }
+  25% { content: "[=   ]"; }
+  50% { content: "[==  ]"; }
+  75% { content: "[=== ]"; }
+  100% { content: "[====]"; }
+}
+
+.ascii-loader {
+  font-family: monospace;
+  color: #00ffff;
+  margin: 15px 0;
+  font-size: 22px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.ascii-loader::after {
+  content: "[    ]";
+  animation: ascii-loading 1s steps(5) infinite;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Result styles */
+.result {
+  margin-top: 15px; /* Reduced from 20px */
+  margin-bottom: 0; /* Added to remove bottom margin */
+  padding: 20px;
+  background-color: #000000;
+  border: 2px solid #00ff00;
+  color: #00ff00;
+  width: 100%;
+  max-width: 600px;
+}
+
+.result h3 {
+  margin-bottom: 10px;
+  color: #00ff00;
+  text-decoration: underline;
+}
+
+.result h3::before {
+  content: "** ";
+}
+
+.result h3::after {
+  content: " **";
+}
+
+.result p {
+  margin: 5px 0;
+  color: #00ff00;
+  word-wrap: break-word;
+}
+
+.result p::before {
+  content: "$ ";
+}
+
+/* Options page styles */
+.options-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 15px 0; /* Reduced from 20px */
+}
+
+.option-group {
+  margin-bottom: 15px; /* Reduced from 20px */
+  border: 1px solid #00ff00;
+  padding: 12px; /* Reduced from 15px */
+}
+
+.option-group label {
+  display: block;
+  margin-bottom: 8px; /* Reduced from 10px */
+  font-weight: bold;
+}
+
+.radio-group, .checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* Reduced from 15px */
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radio-label input {
+  margin-right: 8px;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #00ff00;
+  border-radius: 0;
+  background-color: #000000;
+  outline: none;
+  cursor: pointer;
+}
+
+.radio-label input:checked {
+  background-color: #00ff00;
+  box-shadow: inset 0 0 0 3px #000000;
+}
+
+.radio-text {
+  font-size: 16px;
+}
+
+/* Checkbox styles for separation page */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  margin-right: 8px;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #00ff00;
+  border-radius: 0;
+  background-color: #000000;
+  outline: none;
+  cursor: pointer;
+}
+
+.checkbox-label input:checked {
+  background-color: #00ff00;
+  position: relative;
+}
+
+.checkbox-label input:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000000;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.checkbox-text {
+  font-size: 16px;
+}
+
+.path-selector {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+}
+
+#audio-path, #output-path, #download-path {
+  flex: 1;
+  height: 40px;
+  background-color: #000000;
+  border: 2px solid #00aa00;
+  color: #00ff00;
+  padding: 0 10px;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#browse-btn, #output-browse-btn {
+  min-width: 100px;
+  height: 40px;
+  margin-left: auto;
+}
+
+/* Terminal cursor effect */
+@keyframes cursor {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Result files section for separation page */
+.result-files {
+  margin-top: 15px;
+}
+
+.file-label {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #00dddd;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 600px) {
+  .input-wrapper {
+    flex-direction: column;
+    height: auto;
+    gap: 10px;
+  }
+  
+  #youtube-url {
+    height: 50px;
+    font-size: 14px;
+    margin-bottom: 0;
+  }
+  
+  .input-wrapper button {
+    width: 100%;
+  }
+  
+  button {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .container {
+    padding: 10px;
+    border-width: 1px;
+  }
+  
+  .status, .result {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .radio-group, .checkbox-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .path-selector {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  #audio-path, #output-path, #download-path {
+    width: 100%;
+    margin-bottom: 0;
+  }
+  
+  #browse-btn, #output-browse-btn {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .button-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .action-buttons {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .action-buttons button {
+    flex: 1;
+  }
+}
+
+.separator-text {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+  color: #00aa00;
+  font-weight: bold;
+}
+
+.separator-text::before,
+.separator-text::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: #00aa00;
+}
+
+.separator-text::before {
+  left: 0;
+}
+
+.separator-text::after {
+  right: 0;
+}
+
+.local-audio-wrapper {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.local-audio-wrapper button {
+  width: 100%;
+}
+
+/* Add a class for the last element in the container */
+.last-element {
+  margin-bottom: 0 !important;
+  flex-grow: 0;
+}
+
+/* Adjust buttons to be closer to content */
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px; /* Reduced from 30px */
+  margin-bottom: 15px; /* Add bottom margin */
+}
+
+/* Style for action buttons container */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Terminal output styles */
+.terminal-output {
+  margin-top: 15px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid #00ff00;
+  border-radius: 3px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.terminal-output.hidden {
+  display: none;
+}
+
+.terminal-line {
+  margin-bottom: 5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-line.error {
+  color: #ff0000;
+}
+
+.terminal-line.success {
+  color: #00ff00;
+  font-weight: bold;
+}
+
+/* Cancel button styles */
+#cancel-btn {
+  background-color: #aa0000;
+  color: #ffffff;
+  border: none;
+  margin-left: 10px;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+#cancel-btn:hover {
+  background-color: #ff0000;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+}
+
+#cancel-btn:active {
+  background-color: #880000;
+}
+
+#cancel-btn:disabled {
+  background-color: #555;
+  color: #aaa;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Add a css loading spinner at the end of the file */
+
+/* Loading spinner animation */
+.loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border: 4px solid rgba(0, 255, 0, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #0f0;
+  animation: spin 1.5s linear infinite;
+}
+
+#loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#loading-indicator p {
+  margin: 0;
+  font-size: 16px;
+  color: #0f0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Terminal output styles - always hidden */
+.terminal-output {
+  display: none !important; /* Force hidden no matter what */
+  visibility: hidden;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ensure terminal is always hidden */
+.terminal-output.hidden {
+  display: none;
+}

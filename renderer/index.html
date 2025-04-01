@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YTMP3 Terminal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* SPA-specific styles */
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">    
+    <div class="terminal-header">
+      <!--ASCII Art Title-->
+      <pre class="ascii-title">
+ __   __ _____ __  __  _____ ____
+ \ \ / /|_   _|  \/  ||  __ \___ \
+  \ V /   | | | \  / || |__) |__) |
+   > <    | | | |\/| ||  ___/|__ < 
+   | |    | | | |  | || |    ___) |
+   | |    |_| |_|  |_||_|   |____/ 
+      </pre>
+    </div>
+    
+    <!-- URL Input View -->
+    <div id="url-view" class="view active">
+      <div class="terminal-text">
+        <p>ENTER YOUTUBE URL:</p>
+      </div>
+      
+      <div class="input-wrapper">
+        <input type="text" id="youtube-url" placeholder="enter youtube link">
+        <button id="clear-btn" class="secondary-button" disabled>CLEAR</button>
+        <button id="next-btn">NEXT</button>
+      </div>
+      
+      <div class="separator-text">OR</div>
+      
+      <div class="local-audio-wrapper">
+        <button id="separate-local-btn" class="secondary-button">SEPARATE LOCAL AUDIO</button>
+      </div>
+      
+      <div id="url-status" class="status hidden last-element"></div>
+    </div>
+    
+    <!-- Options View -->
+    <div id="options-view" class="view">
+      <div class="terminal-text">
+        <p>VIDEO: <span id="video-title">...</span></p>
+        <p>CONFIGURE DOWNLOAD OPTIONS:</p>
+      </div>
+      
+      <div class="options-container">
+        <div class="option-group">
+          <label>FORMAT:</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="format" value="mp3" checked>
+              <span class="radio-text">MP3</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="format" value="wav">
+              <span class="radio-text">WAV</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="option-group">
+          <label>QUALITY:</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="quality" value="high" checked>
+              <span class="radio-text">HIGH</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="quality" value="medium">
+              <span class="radio-text">MEDIUM</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="quality" value="low">
+              <span class="radio-text">LOW</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="option-group">
+          <label>DOWNLOAD LOCATION:</label>
+          <div class="path-selector">
+            <input type="text" id="download-path" readonly>
+            <button id="browse-btn">BROWSE</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="button-container">
+        <button id="options-back-btn">BACK</button>
+        <button id="download-btn">DOWNLOAD</button>
+        <button id="local-audio-btn" class="secondary-button">USE LOCAL AUDIO</button>
+      </div>
+      
+      <div id="options-status" class="status hidden last-element"></div>
+      
+      <div id="result" class="result hidden last-element">
+        <h3>DOWNLOAD COMPLETE</h3>
+        <p id="title-display"></p>
+        <p id="path-display"></p>
+      </div>
+    </div>
+    
+    <!-- Separation View -->
+    <div id="separation-view" class="view">
+      <div class="terminal-text">
+        <p>SELECT AUDIO FILE TO SEPARATE:</p>
+      </div>
+      
+      <div class="options-container">
+        <div class="option-group">
+          <div class="path-selector">
+            <input type="text" id="audio-path" readonly>
+            <button id="audio-browse-btn">BROWSE</button>
+          </div>
+        </div>
+        
+        <div class="option-group">
+          <label>SAVE LOCATION:</label>
+          <div class="path-selector">
+            <input type="text" id="output-path" readonly>
+            <button id="output-browse-btn">BROWSE</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="button-container">
+        <button id="separation-back-btn" class="secondary-button">BACK</button>
+        <div class="action-buttons">
+          <button id="separate-btn">SEPARATE</button>
+          <button id="cancel-btn" class="hidden">CANCEL</button>
+        </div>
+      </div>
+      
+      <div id="separation-status" class="status hidden last-element">
+        <div id="loading-indicator" class="hidden">
+          <div class="loading-spinner"></div>
+          <p>Separation in progress, this may take a while...</p>
+        </div>
+      </div>
+      
+      
+      <div id="separation-result" class="result hidden last-element">
+        <h3>SEPARATION COMPLETE</h3>
+        <div class="result-files">
+          <div id="vocals-result">
+            <p class="file-label">VOCALS:</p>
+            <p id="vocals-path"></p>
+          </div>
+          <div id="instrumental-result">
+            <p class="file-label">INSTRUMENTAL:</p>
+            <p id="instrumental-path"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
