@@ -34,10 +34,6 @@
   "build": {
     "appId": "com.ytmp3.app",
     "productName": "YouTube MP3 Downloader",
-    "directories": {
-      "buildResources": "resources",
-      "output": "../ytmp3-electron-builds"
-    },
     "files": [
       "**/*",
       "python/dist/engine*"
@@ -48,6 +44,9 @@
         "to": "python/engine"
       }
     ],
+    "directories": {
+      "buildResources": "resources"
+    },
     "mac": {
       "category": "public.app-category.utilities",
       "target": "dmg",
