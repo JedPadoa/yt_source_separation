@@ -45,7 +45,8 @@
       }
     ],
     "directories": {
-      "buildResources": "resources"
+      "buildResources": "resources",
+      "output": "../yt2mp3-builds"
     },
     "mac": {
       "category": "public.app-category.utilities",
