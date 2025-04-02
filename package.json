@@ -33,7 +33,7 @@
   },
   "build": {
     "appId": "com.ytmp3.app",
-    "productName": "YouTube MP3 Downloader",
+    "productName": "yt2mp3",
     "files": [
       "**/*",
       "python/dist/engine*"
