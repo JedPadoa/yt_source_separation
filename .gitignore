@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+python/dist/
+python/build/
+*.spec
+
+# Electron build directories
+dist/
+../ytmp3-electron-builds/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# test files
+test_audio/
+
+# python build files
+build/
+
+#hooks
+hooks/
+
+#model files
+model/
+
+#test files
+demucs_test.py

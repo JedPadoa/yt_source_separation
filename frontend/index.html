@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Audio Downloader</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+    <!-- URL View -->
+    <div id="url-view" class="view active">
+        <div class="pywebview-drag-region header">
+            YouTube Audio Downloader
+        </div>
+        <div class="content">
+            <input type="text" id="youtube-url" placeholder="Enter YouTube URL">
+            <div class="button-group">
+                <button id="next-btn">Next</button>
+                <button id="clear-btn">Clear</button>
+                <button id="separate-btn" class="secondary-button">Separate Audio</button>
+            </div>
+            <div id="url-status" class="status hidden"></div>
+        </div>
+    </div>
+
+    <!-- Options View -->
+    <div id="options-view" class="view">
+        <div class="pywebview-drag-region header">
+            Download Options
+        </div>
+        <div class="content">
+            <div class="video-info">
+                <h3>Video Title:</h3>
+                <p id="video-title"></p>
+            </div>
+
+            <div class="download-options">
+                <div class="format-section">
+                    <h3>Format:</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="format" value="mp3" checked>
+                            MP3
+                        </label>
+                        <label>
+                            <input type="radio" name="format" value="wav">
+                            WAV
+                        </label>
+                    </div>
+                </div>
+
+                <div class="quality-section">
+                    <h3>Quality:</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="quality" value="high" checked>
+                            High
+                        </label>
+                        <label>
+                            <input type="radio" name="quality" value="medium">
+                            Medium
+                        </label>
+                        <label>
+                            <input type="radio" name="quality" value="low">
+                            Low
+                        </label>
+                    </div>
+                </div>
+
+                <div class="path-section">
+                    <h3>Download Location:</h3>
+                    <div class="path-input">
+                        <input type="text" id="download-path" readonly>
+                        <button id="browse-btn">Browse</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="options-back-btn">Back</button>
+                <button id="download-btn">Download</button>
+            </div>
+
+            <div id="options-status" class="status hidden"></div>
+            
+            <div id="result" class="hidden">
+                <div id="title-display"></div>
+                <div id="path-display"></div>
+                <div class="result-actions">
+                    <button id="result-separate-btn" class="secondary-button">Separate This Audio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separation View -->
+    <div id="separation-view" class="view">
+        <div class="pywebview-drag-region header">
+            Audio Separation
+        </div>
+        <div class="content">
+            <div class="input-section">
+                <h3>Input Audio File:</h3>
+                <div class="path-input">
+                    <input type="text" id="input-audio-path" readonly>
+                    <button id="browse-audio-btn">Browse</button>
+                </div>
+            </div>
+
+            <div class="format-section">
+                <h3>Output Format:</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="separation-format" value="mp3" checked>
+                        MP3
+                    </label>
+                    <label>
+                        <input type="radio" name="separation-format" value="wav">
+                        WAV
+                    </label>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h3>Output Directory:</h3>
+                <div class="path-input">
+                    <input type="text" id="separation-output-path" readonly>
+                    <button id="browse-output-btn">Browse</button>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="separation-back-btn" class="secondary-button">Back</button>
+                <button id="separate-start-btn">Start Separation</button>
+            </div>
+
+            <div id="separation-status" class="status hidden"></div>
+            
+            <div id="separation-result" class="hidden">
+                <div id="vocals-path"></div>
+                <div id="instrumental-path"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="static/js/api.js"></script>
+    <script src="static/js/ui.js"></script>
+    <script src="static/js/app.js"></script>
+</body>
+</html>

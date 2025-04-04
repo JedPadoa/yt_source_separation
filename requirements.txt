@@ -1,0 +1,4 @@
+pywebview>=4.4.1
+yt-dlp>=2023.12.30
+demucs>=4.1.0a2
+pyinstaller>=6.3.0
