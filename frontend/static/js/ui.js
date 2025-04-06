@@ -307,9 +307,6 @@ const UI = {
             
             if (result.success) {
                 this.showStatus('separation', 'Separation completed successfully!', 'success');
-                setTimeout(() => {
-                    this.showSeparationResult(result.vocals_path, result.instrumental_path);
-                }, 1000);
             } else {
                 this.showStatus('separation', result.error || 'Separation failed', 'error');
             }
@@ -321,10 +318,10 @@ const UI = {
         }
     },
 
-    showSeparationResult(vocalsPath, instrumentalPath) {
+    // archived method
+    showSeparationResult(stemsPath) {
         this.hideStatus('separation');
-        this.elements.vocalsPath.textContent = `VOCALS: ${vocalsPath}`;
-        this.elements.instrumentalPath.textContent = `INSTRUMENTAL: ${instrumentalPath}`;
+        this.elements.vocalsPath.textContent = `Stems saved to ${stemsPath}`;
         this.elements.separationResult.classList.remove('hidden');
     },
 

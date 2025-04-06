@@ -2,6 +2,8 @@ import torch
 from pathlib import Path
 import demucs.api
 import sys
+import os
+
 class LocalDemucsSeparator:
     def __init__(self):
         if getattr(sys, 'frozen', False):  # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -16,10 +18,10 @@ class LocalDemucsSeparator:
     def separate_audio(self, audio_path, output_path):
         try:
             origin, separated = self.separator.separate_audio_file(audio_path)
-            self._save_audio(separated, output_path)
+            self._save_audio(separated, output_path, Path(audio_path).stem)
             return {
             'success': True,
-            'vocals_path': f"{output_path}/vocals.wav",
+            'stemsPath': f"{output_path}/separated_audio/{Path(audio_path).stem}"
             }
         except Exception as e:
             print(f"Error: {e}")
@@ -28,12 +30,14 @@ class LocalDemucsSeparator:
             'error': str(e)
             }
         
-    def _save_audio(self, separated, output_path):
+    def _save_audio(self, separated, output_path, name):
         try:
+            os.makedirs(f'{output_path}/separated_audio/{name}', exist_ok=True)
             for stem, source in separated.items():
                 output_name= f"{stem}.wav"
-                demucs.api.save_audio(source, f'{output_path}/{output_name}', samplerate=self.separator.samplerate)
-                print(f"Saved {output_path}")
+                output = f'{output_path}/separated_audio/{name}/{output_name}'
+                demucs.api.save_audio(source, output, samplerate=self.separator.samplerate)
+                print(f"Saved {output_name}")
         except Exception as e:
             print(f"Error: {e}")
             
