@@ -3,6 +3,8 @@ from .downloader import YouTubeDownloader
 from .separator import LocalDemucsSeparator
 from .settings import Settings
 import json
+import static_ffmpeg
+import urllib.request
 
 class API:
     """Main API class exposed to JavaScript"""
@@ -18,6 +20,14 @@ class API:
         settings = self.settings.load_settings()
         if 'ffmpeg_path' in settings:
             self.downloader.ffmpeg_path = settings['ffmpeg_path']
+    
+    def download_ffmpeg(self):
+        """Download ffmpeg"""
+        try:
+            static_ffmpeg.add_paths()
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
 
     def get_settings(self):
         """Get current settings"""

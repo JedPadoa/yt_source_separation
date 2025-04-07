@@ -224,3 +224,16 @@ button:disabled {
 .terminal-text {
     animation: blink 1s infinite;
 }
+
+/* Loading screen */
+.loading-content {
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-text {
+    font-size: 24px;
+    color: #00ff00;
+    text-align: center;
+    animation: blink 1s infinite;
+}

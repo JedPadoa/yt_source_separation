@@ -28,6 +28,10 @@ const api = {
 
     async browseAudioFile() {
         return await window.pywebview.api.browse_audio_file();
+    },
+
+    async downloadFfmpeg() {
+        return await window.pywebview.api.download_ffmpeg();
     }
 };
 

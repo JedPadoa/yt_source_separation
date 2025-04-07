@@ -16,6 +16,9 @@ const UI = {
     },
 
     cacheElements() {
+        // Loading View
+        this.elements.loadingView = document.getElementById('loading-view');
+
         // URL View
         this.elements.youtubeUrl = document.getElementById('youtube-url');
         this.elements.nextBtn = document.getElementById('next-btn');
@@ -35,6 +38,7 @@ const UI = {
 
         // Cache all views
         this.elements.views = {
+            loading: document.getElementById('loading-view'),
             url: document.getElementById('url-view'),
             options: document.getElementById('options-view'),
             separation: document.getElementById('separation-view')
@@ -231,9 +235,28 @@ const UI = {
         }
     },
 
-    onPywebviewReady() {
-        // Initialize app state
-        window.api.getSettings();
+    async onPywebviewReady() {
+        try {
+            // Download FFmpeg first
+            const ffmpegResult = await window.api.downloadFfmpeg();
+            if (!ffmpegResult.success) {
+                throw new Error(ffmpegResult.error || 'Failed to initialize FFmpeg');
+            }
+
+            // Then load settings
+            await window.api.getSettings();
+            
+            // Switch to URL view
+            this.navigateToView('url-view');
+        } catch (error) {
+            console.error('Initialization error:', error);
+            // Show error in loading view
+            const loadingText = document.querySelector('.loading-text');
+            if (loadingText) {
+                loadingText.textContent = 'Error initializing app: ' + error.message;
+                loadingText.style.color = '#ff0000';
+            }
+        }
     },
 
     async handleResultSeparateButton() {
@@ -290,20 +313,26 @@ const UI = {
         this.elements.separateStartBtn.disabled = true;
         this.showStatus('separation', 'Initializing audio separation...', 'info');
 
+        // Store timeout IDs so we can clear them if needed
+        let statusTimeouts = [];
+        
         try {
             // Clear previous results
             this.elements.separationResult.classList.add('hidden');
             
             // Show detailed status updates
-            setTimeout(() => {
+            statusTimeouts.push(setTimeout(() => {
                 this.showStatus('separation', 'Loading audio file and preparing for separation...', 'info');
-            }, 1000);
+            }, 1000));
             
-            setTimeout(() => {
+            statusTimeouts.push(setTimeout(() => {
                 this.showStatus('separation', 'Separating vocals from instrumental (this may take several minutes)...', 'info');
-            }, 3000);
+            }, 3000));
 
             const result = await window.api.separateAudio(inputPath, outputPath);
+            
+            // Clear any pending status updates
+            statusTimeouts.forEach(timeout => clearTimeout(timeout));
             
             if (result.success) {
                 this.showStatus('separation', 'Separation completed successfully!', 'success');
@@ -311,6 +340,9 @@ const UI = {
                 this.showStatus('separation', result.error || 'Separation failed', 'error');
             }
         } catch (error) {
+            // Clear any pending status updates
+            statusTimeouts.forEach(timeout => clearTimeout(timeout));
+            
             console.error('Separation error:', error);
             this.showStatus('separation', 'Error during separation', 'error');
         } finally {

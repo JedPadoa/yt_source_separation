@@ -45,3 +45,6 @@ model/
 
 #test files
 demucs_test.py
+
+#ffmpeg
+ffmpeg
