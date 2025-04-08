@@ -5,7 +5,8 @@ const UI = {
         currentView: 'url-view',
         videoData: null,
         settings: null,
-        lastDownloadedFile: null
+        lastDownloadedFile: null,
+        isSeparationCancelled: false
     },
     
     init() {
@@ -51,6 +52,7 @@ const UI = {
         this.elements.browseOutputBtn = document.getElementById('browse-output-btn');
         this.elements.separationBackBtn = document.getElementById('separation-back-btn');
         this.elements.separateStartBtn = document.getElementById('separate-start-btn');
+        this.elements.separateCancelBtn = document.getElementById('separate-cancel-btn');
         this.elements.separationStatus = document.getElementById('separation-status');
         this.elements.separationResult = document.getElementById('separation-result');
         this.elements.vocalsPath = document.getElementById('vocals-path');
@@ -71,6 +73,15 @@ const UI = {
         // Listen for download progress
         window.addEventListener('download-progress', (e) => {
             this.updateProgress(e.detail);
+        });
+
+        // Listen for separation progress
+        window.addEventListener('separation-progress', (e) => {
+            if (!this.state.isSeparationCancelled) {
+                const percent = Math.round(e.detail * 100);
+                console.log(e.detail)
+                this.showStatus('separation', `Separation in progress... ${percent}%`, 'info');
+            }
         });
 
         // Listen for settings loaded
@@ -100,6 +111,7 @@ const UI = {
         this.elements.browseOutputBtn.addEventListener('click', () => this.handleBrowseOutputButton());
         this.elements.separationBackBtn.addEventListener('click', () => this.handleSeparationBackButton());
         this.elements.separateStartBtn.addEventListener('click', () => this.handleSeparateStartButton());
+        this.elements.separateCancelBtn.addEventListener('click', () => this.handleSeparateCancelButton());
     },
 
     async handleNextButton() {
@@ -220,6 +232,10 @@ const UI = {
         }
     },
 
+    updateSeparationProgress(progress) {
+       console.log(progress)
+    },
+
     showResult(title, path) {
         this.hideStatus('options');
         this.elements.titleDisplay.textContent = `TITLE: ${title}`;
@@ -310,43 +326,59 @@ const UI = {
             return;
         }
 
-        this.elements.separateStartBtn.disabled = true;
-        this.showStatus('separation', 'Initializing audio separation...', 'info');
+        // Reset cancelled state when starting new separation
+        this.state.isSeparationCancelled = false;
 
-        // Store timeout IDs so we can clear them if needed
-        let statusTimeouts = [];
+        this.elements.separateStartBtn.disabled = true;
+        this.elements.separateCancelBtn.classList.remove('hidden');
         
         try {
             // Clear previous results
             this.elements.separationResult.classList.add('hidden');
             
-            // Show detailed status updates
-            statusTimeouts.push(setTimeout(() => {
-                this.showStatus('separation', 'Loading audio file and preparing for separation...', 'info');
-            }, 1000));
-            
-            statusTimeouts.push(setTimeout(() => {
-                this.showStatus('separation', 'Separating vocals from instrumental (this may take several minutes)...', 'info');
-            }, 3000));
+            // Show single status message
+            this.showStatus('separation', 'Separation in progress... This may take several minutes.', 'info');
 
             const result = await window.api.separateAudio(inputPath, outputPath);
             
-            // Clear any pending status updates
-            statusTimeouts.forEach(timeout => clearTimeout(timeout));
-            
-            if (result.success) {
-                this.showStatus('separation', 'Separation completed successfully!', 'success');
-            } else {
-                this.showStatus('separation', result.error || 'Separation failed', 'error');
+            if (!this.state.isSeparationCancelled) {
+                if (result.success) {
+                    this.showStatus('separation', 'Separation completed successfully!', 'success');
+                } else {
+                    this.showStatus('separation', result.error || 'Separation failed', 'error');
+                }
             }
         } catch (error) {
-            // Clear any pending status updates
-            statusTimeouts.forEach(timeout => clearTimeout(timeout));
-            
-            console.error('Separation error:', error);
-            this.showStatus('separation', 'Error during separation', 'error');
+            if (!this.state.isSeparationCancelled) {
+                console.error('Separation error:', error);
+                this.showStatus('separation', 'Error during separation', 'error');
+            }
         } finally {
-            this.elements.separateStartBtn.disabled = false;
+            if (!this.state.isSeparationCancelled) {
+                this.elements.separateStartBtn.disabled = false;
+                this.elements.separateCancelBtn.classList.add('hidden');
+            }
+        }
+    },
+
+    async handleSeparateCancelButton() {
+        try {
+            // Set cancelled state
+            this.state.isSeparationCancelled = true;
+            
+            this.showStatus('separation', 'Cancelling separation...', 'cancel');
+            const result = await window.api.cancelSeparation();
+            
+            if (result.success) {
+                this.showStatus('separation', 'Separation cancelled', 'cancel');
+                this.elements.separateStartBtn.disabled = false;
+                this.elements.separateCancelBtn.classList.add('hidden');
+            } else {
+                this.showStatus('separation', result.error || 'Failed to cancel separation', 'error');
+            }
+        } catch (error) {
+            console.error('Cancel error:', error);
+            this.showStatus('separation', 'Error cancelling separation', 'error');
         }
     },
 

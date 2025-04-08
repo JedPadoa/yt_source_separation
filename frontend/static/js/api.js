@@ -22,6 +22,10 @@ const api = {
         );
     },
 
+    async cancelSeparation() {
+        return await window.pywebview.api.cancel_separation();
+    },
+
     async browseDirectory() {
         return await window.pywebview.api.browse_directory();
     },

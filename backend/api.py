@@ -67,14 +67,21 @@ class API:
         """Separate audio into vocals and instrumental"""
         return self.separator.separate_audio(audio_path, output_path)
 
+    def cancel_separation(self):
+        """Cancel ongoing audio separation"""
+        return self.separator.cancel_separation()
+
     def _handle_progress(self, progress_data):
         """Handle progress updates"""
+        print(f"API progress handler received progress data: {progress_data}")
         # This will be connected to the window's evaluate_js method
         # to send progress updates to the frontend
         if hasattr(self, 'window'):
             # Convert None values to null and ensure proper JSON serialization
             serialized_data = json.dumps(progress_data)
-            js = f"window.dispatchEvent(new CustomEvent('download-progress', {{detail: {serialized_data}}}))"
+            event_name = 'separation-progress' if progress_data.get('type') == 'separation' else 'download-progress'
+            print(f"API progress handler received progress data: {self.separator.progress_callback}")
+            js = f"window.dispatchEvent(new CustomEvent('{event_name}', {{detail: {self.separator.progress_callback}}}))"
             self.window.evaluate_js(js)
 
     def browse_directory(self):
@@ -132,3 +139,9 @@ class API:
                 'success': False,
                 'error': str(e)
             }
+            
+if __name__ == '__main__':
+    audio_path = '/Users/jeddo/Downloads/DBK_TR10_78_vocals_choir_low_loop_blurred_vision_Dmin.wav'
+    output_path = '/Users/jeddo/Downloads'
+    api = API()
+    api.separate_audio(audio_path, output_path)

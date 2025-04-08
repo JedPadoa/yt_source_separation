@@ -33,6 +33,7 @@ Thumbs.db
 
 # test files
 test_audio/
+demucs_progress_test.py
 
 # python build files
 build/
@@ -48,3 +49,8 @@ demucs_test.py
 
 #ffmpeg
 ffmpeg
+
+#venv
+env/
+
+

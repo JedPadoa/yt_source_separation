@@ -164,6 +164,24 @@ button:disabled {
     border-color: #00ffff;
 }
 
+.status.cancel {
+    color: #ff0000;
+    border-color: #ff0000;
+}
+
+/* Cancel button style */
+#separate-cancel-btn {
+    background-color: #ff0000;
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+#separate-cancel-btn:hover {
+    background-color: #ff3333;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+}
+
 .hidden {
     display: none !important;
 }
@@ -199,6 +217,11 @@ button:disabled {
     width: 100%;
     max-width: 600px;
     justify-content: space-between;
+}
+
+.action-group {
+    display: flex;
+    gap: 10px;
 }
 
 /* Result display */
