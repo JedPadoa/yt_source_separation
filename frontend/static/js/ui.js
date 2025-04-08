@@ -7,8 +7,30 @@ const UI = {
         settings: null,
         lastDownloadedFile: null,
         isSeparationCancelled: false
+    },  
+
+    defaultStates: {
+        url: {
+            inputValue: '',
+            statusHidden: true
+        },
+        options: {
+            videoTitle: '',
+            statusHidden: true,
+            resultHidden: true,
+            downloadButtonDisabled: false
+        },
+        separation: {
+            inputAudioPath: '',
+            outputPath: '',
+            statusHidden: true,
+            resultHidden: true,
+            startButtonDisabled: false,
+            cancelButtonHidden: true,
+            isCancelled: false
+        }
     },
-    
+
     init() {
         // Cache DOM elements
         this.cacheElements();
@@ -17,101 +39,112 @@ const UI = {
     },
 
     cacheElements() {
-        // Loading View
-        this.elements.loadingView = document.getElementById('loading-view');
-
-        // URL View
-        this.elements.youtubeUrl = document.getElementById('youtube-url');
-        this.elements.nextBtn = document.getElementById('next-btn');
-        this.elements.clearBtn = document.getElementById('clear-btn');
-        this.elements.urlStatus = document.getElementById('url-status');
-        
-        // Options View
-        this.elements.videoTitle = document.getElementById('video-title');
-        this.elements.downloadPath = document.getElementById('download-path');
-        this.elements.browseBtn = document.getElementById('browse-btn');
-        this.elements.optionsBackBtn = document.getElementById('options-back-btn');
-        this.elements.downloadBtn = document.getElementById('download-btn');
-        this.elements.optionsStatus = document.getElementById('options-status');
-        this.elements.result = document.getElementById('result');
-        this.elements.titleDisplay = document.getElementById('title-display');
-        this.elements.pathDisplay = document.getElementById('path-display');
-
-        // Cache all views
-        this.elements.views = {
-            loading: document.getElementById('loading-view'),
-            url: document.getElementById('url-view'),
-            options: document.getElementById('options-view'),
-            separation: document.getElementById('separation-view')
+        // Define elements to cache by ID
+        const elementIds = {
+            // Views
+            views: ['loading-view', 'url-view', 'options-view', 'separation-view'],
+            
+            // URL View elements
+            'youtubeUrl': 'youtube-url',
+            'nextBtn': 'next-btn',
+            'clearBtn': 'clear-btn',
+            'urlStatus': 'url-status',
+            
+            // Options View elements
+            'videoTitle': 'video-title',
+            'downloadPath': 'download-path',
+            'browseBtn': 'browse-btn',
+            'optionsBackBtn': 'options-back-btn',
+            'downloadBtn': 'download-btn',
+            'optionsStatus': 'options-status',
+            'result': 'result',
+            'titleDisplay': 'title-display',
+            'pathDisplay': 'path-display',
+            
+            // Separation View elements
+            'inputAudioPath': 'input-audio-path',
+            'browseAudioBtn': 'browse-audio-btn',
+            'separationOutputPath': 'separation-output-path',
+            'browseOutputBtn': 'browse-output-btn',
+            'separationBackBtn': 'separation-back-btn',
+            'separateStartBtn': 'separate-start-btn',
+            'separateCancelBtn': 'separate-cancel-btn',
+            'separationStatus': 'separation-status',
+            'separationResult': 'separation-result',
+            'vocalsPath': 'vocals-path',
+            'instrumentalPath': 'instrumental-path',
+            
+            // Navigation buttons
+            'separateBtn': 'separate-btn',
+            'resultSeparateBtn': 'result-separate-btn'
         };
-
-        // Separation View
-        this.elements.inputAudioPath = document.getElementById('input-audio-path');
-        this.elements.browseAudioBtn = document.getElementById('browse-audio-btn');
-        this.elements.separationOutputPath = document.getElementById('separation-output-path');
-        this.elements.browseOutputBtn = document.getElementById('browse-output-btn');
-        this.elements.separationBackBtn = document.getElementById('separation-back-btn');
-        this.elements.separateStartBtn = document.getElementById('separate-start-btn');
-        this.elements.separateCancelBtn = document.getElementById('separate-cancel-btn');
-        this.elements.separationStatus = document.getElementById('separation-status');
-        this.elements.separationResult = document.getElementById('separation-result');
-        this.elements.vocalsPath = document.getElementById('vocals-path');
-        this.elements.instrumentalPath = document.getElementById('instrumental-path');
         
-        // New buttons
-        this.elements.separateBtn = document.getElementById('separate-btn');
-        this.elements.resultSeparateBtn = document.getElementById('result-separate-btn');
+        // Process views separately to create a nested structure
+        this.elements.views = {};
+        elementIds.views.forEach(id => {
+            this.elements.views[id.replace('-view', '')] = document.getElementById(id);
+        });
+        
+        // Process all other elements
+        for (const [key, id] of Object.entries(elementIds)) {
+            if (key !== 'views') {
+                this.elements[key] = document.getElementById(id);
+            }
+        }
     },
 
     setupEventListeners() {
-        // Listen for pywebview ready
-        window.addEventListener('pywebviewready', () => {
-            console.log('pywebview is ready');
-            this.onPywebviewReady();
+        // Global events
+        const globalEvents = [
+            { name: 'pywebviewready', handler: () => this.onPywebviewReady() },
+            { name: 'download-progress', handler: (e) => this.updateProgress(e.detail) },
+            { name: 'separation-progress', handler: (e) => {
+                if (!this.state.isSeparationCancelled) {
+                    const percent = e.detail;
+                    console.log(e.detail);
+                    this.showStatus('separation', `Separation in progress... ${percent}%`, 'info');
+                }
+            }},
+            { name: 'settings-loaded', handler: (e) => this.updateSettings(e.detail) }
+        ];
+        
+        // Add global event listeners
+        globalEvents.forEach(event => {
+            window.addEventListener(event.name, event.handler);
         });
-
-        // Listen for download progress
-        window.addEventListener('download-progress', (e) => {
-            this.updateProgress(e.detail);
-        });
-
-        // Listen for separation progress
-        window.addEventListener('separation-progress', (e) => {
-            if (!this.state.isSeparationCancelled) {
-                const percent = Math.round(e.detail * 100);
-                console.log(e.detail)
-                this.showStatus('separation', `Separation in progress... ${percent}%`, 'info');
+        
+        // Element-specific events
+        const elementEvents = [
+            // URL View
+            { element: 'youtubeUrl', event: 'keydown', handler: (e) => {
+                if (e.key === 'Enter') this.elements.nextBtn.click();
+            }},
+            { element: 'nextBtn', event: 'click', handler: () => this.handleNextButton() },
+            { element: 'clearBtn', event: 'click', handler: () => this.handleClearButton() },
+            
+            // Options View
+            { element: 'optionsBackBtn', event: 'click', handler: () => this.navigateToView('url-view') },
+            { element: 'browseBtn', event: 'click', handler: () => this.handleBrowseButton() },
+            { element: 'downloadBtn', event: 'click', handler: () => this.handleDownloadButton() },
+            
+            // Separation View
+            { element: 'separateBtn', event: 'click', handler: () => this.navigateToView('separation-view') },
+            { element: 'resultSeparateBtn', event: 'click', handler: () => this.handleResultSeparateButton() },
+            { element: 'browseAudioBtn', event: 'click', handler: () => this.handleBrowseAudioButton() },
+            { element: 'browseOutputBtn', event: 'click', handler: () => this.handleBrowseOutputButton() },
+            { element: 'separationBackBtn', event: 'click', handler: () => this.handleSeparationBackButton() },
+            { element: 'separateStartBtn', event: 'click', handler: () => this.handleSeparateStartButton() },
+            { element: 'separateCancelBtn', event: 'click', handler: () => this.handleSeparateCancelButton() }
+        ];
+        
+        // Add element event listeners
+        elementEvents.forEach(({element, event, handler}) => {
+            if (this.elements[element]) {
+                this.elements[element].addEventListener(event, handler);
+            } else {
+                console.warn(`Element ${element} not found for event listener`);
             }
         });
-
-        // Listen for settings loaded
-        window.addEventListener('settings-loaded', (e) => {
-            this.updateSettings(e.detail);
-        });
-
-        // URL View Events
-        this.elements.youtubeUrl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.elements.nextBtn.click();
-            }
-        });
-
-        this.elements.nextBtn.addEventListener('click', () => this.handleNextButton());
-        this.elements.clearBtn.addEventListener('click', () => this.handleClearButton());
-
-        // Options View Events
-        this.elements.optionsBackBtn.addEventListener('click', () => this.navigateToView('url-view'));
-        this.elements.browseBtn.addEventListener('click', () => this.handleBrowseButton());
-        this.elements.downloadBtn.addEventListener('click', () => this.handleDownloadButton());
-
-        // Separation View Events
-        this.elements.separateBtn.addEventListener('click', () => this.navigateToView('separation-view'));
-        this.elements.resultSeparateBtn.addEventListener('click', () => this.handleResultSeparateButton());
-        this.elements.browseAudioBtn.addEventListener('click', () => this.handleBrowseAudioButton());
-        this.elements.browseOutputBtn.addEventListener('click', () => this.handleBrowseOutputButton());
-        this.elements.separationBackBtn.addEventListener('click', () => this.handleSeparationBackButton());
-        this.elements.separateStartBtn.addEventListener('click', () => this.handleSeparateStartButton());
-        this.elements.separateCancelBtn.addEventListener('click', () => this.handleSeparateCancelButton());
     },
 
     async handleNextButton() {
@@ -198,9 +231,27 @@ const UI = {
     },
 
     navigateToView(viewId) {
+        // Reset state of the current view before switching
+        const currentViewId = this.state.currentView;
+        
+        // Reset the view we're navigating away from
+        switch (currentViewId) {
+            case 'url-view':
+                this.resetUrlView();
+                break;
+            case 'options-view':
+                this.resetOptionsView();
+                break;
+            case 'separation-view':
+                this.resetSeparationView();
+                break;
+        }
+        
+        // Switch to the new view
         Object.values(this.elements.views).forEach(view => {
             view.classList.remove('active');
         });
+        
         this.elements.views[viewId.replace('-view', '')].classList.add('active');
         this.state.currentView = viewId;
     },
@@ -276,8 +327,17 @@ const UI = {
     },
 
     async handleResultSeparateButton() {
+        // Set input to last downloaded file instead of using default reset
         this.elements.inputAudioPath.value = this.state.lastDownloadedFile || '';
         this.elements.separationOutputPath.value = this.elements.downloadPath.value || '';
+        
+        // Reset other separation view states
+        this.hideStatus('separation');
+        this.elements.separationResult.classList.add('hidden');
+        this.elements.separateStartBtn.disabled = false;
+        this.elements.separateCancelBtn.classList.add('hidden');
+        this.state.isSeparationCancelled = false;
+        
         this.navigateToView('separation-view');
     },
 
@@ -387,6 +447,45 @@ const UI = {
         this.hideStatus('separation');
         this.elements.vocalsPath.textContent = `Stems saved to ${stemsPath}`;
         this.elements.separationResult.classList.remove('hidden');
+    },
+
+    resetUrlView() {
+        this.elements.youtubeUrl.value = this.defaultStates.url.inputValue;
+        if (this.defaultStates.url.statusHidden) {
+            this.hideStatus('url');
+        }
+    },
+
+    resetOptionsView() {
+        this.elements.videoTitle.textContent = this.defaultStates.options.videoTitle;
+        if (this.defaultStates.options.statusHidden) {
+            this.hideStatus('options');
+        }
+        if (this.defaultStates.options.resultHidden) {
+            this.elements.result.classList.add('hidden');
+        }
+        this.elements.downloadBtn.disabled = this.defaultStates.options.downloadButtonDisabled;
+    },
+
+    resetSeparationView() {
+        // Preserve download path from settings but reset input path
+        const preservedOutputPath = this.state.settings?.download_path || '';
+        
+        this.elements.inputAudioPath.value = this.defaultStates.separation.inputAudioPath;
+        this.elements.separationOutputPath.value = preservedOutputPath;
+        
+        // Always hide status when leaving separation view
+        this.hideStatus('separation');
+        
+        // Hide result area
+        this.elements.separationResult.classList.add('hidden');
+        
+        // Reset button states
+        this.elements.separateStartBtn.disabled = this.defaultStates.separation.startButtonDisabled;
+        this.elements.separateCancelBtn.classList.add('hidden');
+        
+        // Reset cancellation state
+        this.state.isSeparationCancelled = this.defaultStates.separation.isCancelled;
     },
 
     // ... other UI methods

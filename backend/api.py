@@ -1,6 +1,5 @@
 import os
 from .downloader import YouTubeDownloader
-from .separator import LocalDemucsSeparator
 from .settings import Settings
 import json
 import static_ffmpeg
@@ -19,6 +18,7 @@ class API:
     def __init__(self):
         self.settings = Settings()
         self.downloader = YouTubeDownloader()
+        self.progress_callback = None
         #demucs variables
         if getattr(sys, 'frozen', False):  # PyInstaller creates a temp folder and stores path in _MEIPASS
             base_dir = Path(sys._MEIPASS)
@@ -27,12 +27,10 @@ class API:
             # Adjust depending on your folder structure
         model_dir = Path(f'{base_dir}/model/hub/checkpoints')
         torch.hub.set_dir(model_dir)
+        
         self.separator = demucs.api.Separator(repo=model_dir, model='955717e8', callback=self.callback)
-        self.separation_process = None
-        self.is_cancelled = False
-        self.progress_callback = None
-        # Register cleanup on exit
-        atexit.register(self._cleanup)
+        self.cancellation_requested = False
+       
         self._load_settings()
 
     def _load_settings(self):
@@ -92,8 +90,7 @@ class API:
             # Convert None values to null and ensure proper JSON serialization
             serialized_data = json.dumps(progress_data)
             event_name = 'separation-progress' if progress_data.get('type') == 'separation' else 'download-progress'
-            print(f"API progress handler received progress data: {self.separator.progress_callback}")
-            js = f"window.dispatchEvent(new CustomEvent('{event_name}', {{detail: {self.separator.progress_callback}}}))"
+            js = f"window.dispatchEvent(new CustomEvent('{event_name}', {{detail: {serialized_data}}}))"
             self.window.evaluate_js(js)
 
     def browse_directory(self):
@@ -152,8 +149,11 @@ class API:
                 'error': str(e)
             }
     def callback(self, progress_dict):
-        progress_percent = math.floor(progress_dict['segment_offset'] / progress_dict['audio_length'] * 100)
+        if self.cancellation_requested:
+            self.cancellation_requested = False  # Reset flag
+            raise Exception("Separation cancelled by user")
         
+        progress_percent = math.floor(progress_dict['segment_offset'] / progress_dict['audio_length'] * 100)
         progress_data = {
             'type': 'separation',
             'percent': progress_percent,
@@ -164,60 +164,43 @@ class API:
         
         if hasattr(self, 'window'):
             # Convert None values to null and ensure proper JSON serialization
-            serialized_data = json.dumps(progress_data)
+            ui_percent = progress_data['percent']
             event_name = 'separation-progress'
-            print(f"API progress handler received progress data: {serialized_data.percent}")
-            js = f"window.dispatchEvent(new CustomEvent('{event_name}', {{detail: {serialized_data}}}))"
+            print(f"API progress handler received progress data: {progress_percent}")
+            js = f"window.dispatchEvent(new CustomEvent('{event_name}', {{detail: {progress_percent}}}))"
             self.window.evaluate_js(js)
             
         print(f'progress: {progress_percent}%')
         return progress_percent
-        
-    def _cleanup(self):
-        """Clean up any running processes and resources"""
-        if self.separation_process:
-            try:
-                self.separation_process.terminate()
-                self.separation_process.join()
-            except:
-                pass
-            finally:
-                self.separation_process = None
 
     def separate_audio(self, audio_path, output_path):
-        # Clean up any existing process first
-        self._cleanup()
-        
-        # Create and start new process
-        self.is_cancelled = False
-        self.separation_process = multiprocessing.Process(
-            target=self._run_separation,
-            args=(audio_path, output_path)
-        )
-        self.separation_process.start()
-        # Wait for process to complete
-        self.separation_process.join()
-        
-        # Clean up after completion
-        result = self.separation_process.exitcode == 0
-        self._cleanup()
-        
-        return {
-            'success': result,
-            'stemsPath': f"{output_path}/separated_audio/{Path(audio_path).stem}" if result else None
+        try:
+            origin, separated = self.separator.separate_audio_file(audio_path)
+            self._save_audio(separated, output_path, Path(audio_path).stem)
+            return {
+            'success':  True,
+            'stemsPath': f"{output_path}/separated_audio/{Path(audio_path).stem}"
         }
+        except Exception as e:
+            if "Separation cancelled by user" in str(e):
+                return {
+                    'success': False,
+                    'error': 'Separation was cancelled',
+                    'cancelled': True
+                }
+            else:
+                print(f"Error: {e}")
+                return {
+                    'success': False,
+                    'error': str(e)
+                }
 
     def cancel_separation(self):
         """Cancel ongoing separation and clean up"""
-        if not self.separation_process:
-            return {'success': False, 'error': 'No active separation process'}
-            
         try:
-            self.is_cancelled = True
-            self.separation_process.terminate()
-            self.separation_process.join()
-            self._cleanup()
-            return {'success': True}
+        # Set the cancellation flag that will be checked in the callback
+            self.cancellation_requested = True
+            return {'success': True, 'message': 'Cancellation requested'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
         
