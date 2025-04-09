@@ -80,6 +80,15 @@ class API:
             options['quality'],
             self._handle_progress
         )
+    
+    def cancel_download(self):
+        """Cancel ongoing YouTube download"""
+        try:
+            # Set a flag in the downloader to cancel
+            self.downloader.cancel_download()
+            return {'success': True, 'message': 'Download cancellation requested'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
 
     def _handle_progress(self, progress_data):
         """Handle progress updates"""
@@ -150,7 +159,6 @@ class API:
             }
     def callback(self, progress_dict):
         if self.cancellation_requested:
-            self.cancellation_requested = False  # Reset flag
             raise Exception("Separation cancelled by user")
         
         progress_percent = math.floor(progress_dict['segment_offset'] / progress_dict['audio_length'] * 100)
@@ -222,6 +230,23 @@ class API:
         except Exception as e:
             print(f"Error: {e}")
             
+    def reset_separation_cancellation(self):
+        """Reset the separation cancellation flag"""
+        try:
+            self.cancellation_requested = False
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def reset_download_cancellation(self):
+        """Reset the download cancellation flag"""
+        try:
+            # Reset download cancellation flag in the downloader
+            self.downloader.is_cancelled = False
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
 if __name__ == '__main__':
     audio_path = '/Users/jeddo/Downloads/DBK_TR10_78_vocals_choir_low_loop_blurred_vision_Dmin.wav'
     output_path = '/Users/jeddo/Downloads'

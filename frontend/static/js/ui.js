@@ -123,12 +123,17 @@ const UI = {
             { element: 'clearBtn', event: 'click', handler: () => this.handleClearButton() },
             
             // Options View
-            { element: 'optionsBackBtn', event: 'click', handler: () => this.navigateToView('url-view') },
+            { element: 'optionsBackBtn', event: 'click', handler: () => this.handleOptionsBackButton() },,
             { element: 'browseBtn', event: 'click', handler: () => this.handleBrowseButton() },
             { element: 'downloadBtn', event: 'click', handler: () => this.handleDownloadButton() },
             
             // Separation View
-            { element: 'separateBtn', event: 'click', handler: () => this.navigateToView('separation-view') },
+            { element: 'separateBtn', event: 'click', handler: () => {
+                this.defaultStates.separation.statusHidden = true;
+                this.defaultStates.separation.isCancelled = false;
+                this.hideStatus('separation');
+                this.navigateToView('separation-view');
+            }},,
             { element: 'resultSeparateBtn', event: 'click', handler: () => this.handleResultSeparateButton() },
             { element: 'browseAudioBtn', event: 'click', handler: () => this.handleBrowseAudioButton() },
             { element: 'browseOutputBtn', event: 'click', handler: () => this.handleBrowseOutputButton() },
@@ -165,6 +170,11 @@ const UI = {
                     title: result.title
                 };
                 this.elements.videoTitle.textContent = result.title;
+                
+                // Reset any options view status before navigating
+                this.hideStatus('options');
+                this.elements.result.classList.add('hidden');
+                
                 this.navigateToView('options-view');
             } else {
                 this.showStatus('url', result.error || 'Invalid YouTube URL', 'error');
@@ -203,7 +213,15 @@ const UI = {
             return;
         }
 
+        // Reset any download cancellation flag first
+        await window.api.resetDownloadCancellation();
+
+        // Disable the download button
         this.elements.downloadBtn.disabled = true;
+        
+        // Disable the back button during download
+        this.elements.optionsBackBtn.disabled = true;
+        
         this.showStatus('options', 'Starting download...', 'info');
 
         const format = document.querySelector('input[name="format"]:checked').value;
@@ -226,7 +244,9 @@ const UI = {
             console.error('Download error:', error);
             this.showStatus('options', 'Error during download', 'error');
         } finally {
+            // Re-enable buttons when download completes or fails
             this.elements.downloadBtn.disabled = false;
+            this.elements.optionsBackBtn.disabled = false;
         }
     },
 
@@ -245,6 +265,13 @@ const UI = {
             case 'separation-view':
                 this.resetSeparationView();
                 break;
+        }
+        
+        // When navigating to options view, ensure status is hidden
+        if (viewId === 'options-view') {
+            this.hideStatus('options');
+            // Reset result area too if it was showing
+            this.elements.result.classList.add('hidden');
         }
         
         // Switch to the new view
@@ -274,6 +301,10 @@ const UI = {
 
     updateProgress(progress) {
         if (progress.status === 'downloading') {
+            // Re-enable the back button once download has started
+            // This allows users to cancel the download
+            this.elements.optionsBackBtn.disabled = false;
+            
             this.showStatus('options', 
                 `Downloading... ${Math.round(progress.percent)}%${progress.speed ? ` (${progress.speed})` : ''}`, 
                 'info'
@@ -371,12 +402,53 @@ const UI = {
         }
     },
 
-    handleSeparationBackButton() {
-        const targetView = this.state.lastDownloadedFile ? 'options-view' : 'url-view';
-        this.navigateToView(targetView);
+    handleOptionsBackButton() {
+        // Cancel any ongoing download
+        window.api.cancelDownload();
+        
+        // Explicitly reset the options view
+        this.resetOptionsView();
+        
+        // Hide status message if any is displayed
+        this.hideStatus('options');
+        
+        // Navigate back to URL view
+        this.navigateToView('url-view');
+    },
+
+    async handleSeparationBackButton() {
+        // Set the cancellation flag in the UI state
+        this.state.isSeparationCancelled = true;
+        
+        // Show cancellation status
+        this.showStatus('separation', 'Cancelling separation...', 'cancel');
+        
+        try {
+            // Request cancellation from the backend
+            const result = await window.api.cancelSeparation();
+            
+            if (result.success) {
+                // Navigate back to URL view
+                this.navigateToView('url-view');
+            } else {
+                // If cancellation failed, reset the flag and show error
+                this.state.isSeparationCancelled = false;
+                this.showStatus('separation', result.error || 'Failed to cancel separation', 'error');
+            }
+        } catch (error) {
+            // Handle any errors during cancellation
+            console.error('Cancellation error:', error);
+            this.state.isSeparationCancelled = false;
+            this.showStatus('separation', 'Error cancelling separation', 'error');
+        }
     },
 
     async handleSeparateStartButton() {
+        // First, explicitly reset the cancellation flags at the beginning
+        this.state.isSeparationCancelled = false;
+        // Also reset the API cancellation flag
+        await window.api.resetSeparationCancellation();
+        
         const inputPath = this.elements.inputAudioPath.value;
         const outputPath = this.elements.separationOutputPath.value;
         const fileType = document.querySelector('input[name="separation-format"]:checked').value;
@@ -385,9 +457,6 @@ const UI = {
             this.showStatus('separation', 'Please select input file and output directory', 'error');
             return;
         }
-
-        // Reset cancelled state when starting new separation
-        this.state.isSeparationCancelled = false;
 
         this.elements.separateStartBtn.disabled = true;
         this.elements.separateCancelBtn.classList.remove('hidden');
@@ -429,7 +498,7 @@ const UI = {
             this.showStatus('separation', 'Cancelling separation...', 'cancel');
             const result = await window.api.cancelSeparation();
             
-            if (result.success) {
+            if (result.success && this.state.isSeparationCancelled) {
                 this.showStatus('separation', 'Separation cancelled', 'cancel');
                 this.elements.separateStartBtn.disabled = false;
                 this.elements.separateCancelBtn.classList.add('hidden');
@@ -465,6 +534,10 @@ const UI = {
             this.elements.result.classList.add('hidden');
         }
         this.elements.downloadBtn.disabled = this.defaultStates.options.downloadButtonDisabled;
+        this.elements.optionsBackBtn.disabled = false;
+        
+        // Reset download cancellation state when leaving options view
+        window.api.resetDownloadCancellation();
     },
 
     resetSeparationView() {
@@ -476,6 +549,7 @@ const UI = {
         
         // Always hide status when leaving separation view
         this.hideStatus('separation');
+        this.defaultStates.separation.statusHidden = true;
         
         // Hide result area
         this.elements.separationResult.classList.add('hidden');
@@ -484,8 +558,10 @@ const UI = {
         this.elements.separateStartBtn.disabled = this.defaultStates.separation.startButtonDisabled;
         this.elements.separateCancelBtn.classList.add('hidden');
         
-        // Reset cancellation state
-        this.state.isSeparationCancelled = this.defaultStates.separation.isCancelled;
+        // Reset cancellation state 
+        this.state.isSeparationCancelled = false;
+        // Also reset backend cancellation state
+        //window.api.resetSeparationCancellation();
     },
 
     // ... other UI methods

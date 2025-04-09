@@ -36,6 +36,18 @@ const api = {
 
     async downloadFfmpeg() {
         return await window.pywebview.api.download_ffmpeg();
+    },
+
+    async cancelDownload() {
+        return await window.pywebview.api.cancel_download();
+    },
+
+    async resetSeparationCancellation() {
+        return await window.pywebview.api.reset_separation_cancellation();
+    },
+
+    async resetDownloadCancellation() {
+        return await window.pywebview.api.reset_download_cancellation();
     }
 };
 
